@@ -11,6 +11,17 @@ import { Login } from "./pages/Login";
 import { Pelunasan } from "./pages/Pelunasan";
 import { NewCustomer } from "./pages/NewCustomer";
 
+const getBasename = () => {
+  const path = window.location.pathname;
+  if (window.location.hostname.endsWith(".github.io")) {
+    const segments = path.split("/").filter(Boolean);
+    if (segments.length > 0) {
+      return `/${segments[0]}`;
+    }
+  }
+  return "/";
+};
+
 export const router = createBrowserRouter([
   {
     path: "/login",
@@ -31,5 +42,7 @@ export const router = createBrowserRouter([
       { path: "pelunasan", Component: Pelunasan },
     ],
   },
-]);
+], {
+  basename: getBasename(),
+});
 
