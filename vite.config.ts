@@ -17,7 +17,7 @@ function figmaAssetResolver() {
 }
 
 export default defineConfig({
-  base: './',
+  base: '/SalesForceApp/', // ganti sesuai nama repo
   plugins: [
     figmaAssetResolver(),
     // The React and Tailwind plugins are both required for Make, even if
