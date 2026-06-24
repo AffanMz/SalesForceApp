@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#45C55D" />
+      <stop offset="100%" stop-color="#2b9348" />
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="110" fill="url(#grad)" />
+  <g transform="translate(30, 20)">
+    <!-- Growth/Sales trending bars -->
+    <rect x="120" y="260" width="50" height="120" rx="12" fill="#ffffff" opacity="0.75" />
+    <rect x="200" y="180" width="50" height="200" rx="12" fill="#ffffff" opacity="0.85" />
+    <rect x="280" y="100" width="50" height="280" rx="12" fill="#ffffff" />
+    <!-- Arrow indicating sales success/trending up -->
+    <path d="M280 100 L305 65 L330 100 Z" fill="#ffffff" />
+    <circle cx="305" cy="65" r="8" fill="#ffffff" />
+  </g>
+</svg>
