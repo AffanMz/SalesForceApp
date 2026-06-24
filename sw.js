@@ -1,10 +1,9 @@
 const CACHE_NAME = "salesforce-cache-v1";
 const ASSETS_TO_CACHE = [
-  "/",
-  "/index.html",
-  "/src/main.tsx",
-  "/logo.svg",
-  "/manifest.json"
+  "./",
+  "index.html",
+  "logo.svg",
+  "manifest.json"
 ];
 
 // Install Event
@@ -61,7 +60,7 @@ self.addEventListener("fetch", (event) => {
           }
           // If both fail and request is for page navigation, return index.html
           if (event.request.mode === "navigate") {
-            return caches.match("/index.html");
+            return caches.match("index.html");
           }
         });
       })
