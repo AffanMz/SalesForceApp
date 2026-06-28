@@ -10,6 +10,7 @@ import { SalesOrder } from "./pages/SalesOrder";
 import { Login } from "./pages/Login";
 import { Pelunasan } from "./pages/Pelunasan";
 import { NewCustomer } from "./pages/NewCustomer";
+import { ProductDetail } from "./pages/ProductDetail";
 
 export const router = createHashRouter([
   {
@@ -26,6 +27,7 @@ export const router = createHashRouter([
       { path: "customer/:id", Component: CustomerDetail },
       { path: "customer/new", Component: NewCustomer },
       { path: "stock", Component: Stock },
+      { path: "stock/:id", Component: ProductDetail },
       { path: "profile", Component: Profile },
       { path: "sales-order", Component: SalesOrder },
       { path: "pelunasan", Component: Pelunasan },

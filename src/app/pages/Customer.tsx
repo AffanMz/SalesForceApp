@@ -1,17 +1,10 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router";
-import { Search, Filter, MapPin, ChevronRight, Plus, X } from "lucide-react";
+import { Search, Filter, MapPin, ChevronRight, Plus, X, ArrowLeft } from "lucide-react";
 import { Card, CardContent } from "../components/ui/card";
 import { Input } from "../components/ui/input";
 import { Button } from "../components/ui/button";
 import { Badge } from "../components/ui/badge";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "../components/ui/sheet";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
 import { toast } from "sonner";
 
@@ -153,6 +146,105 @@ export function Customer() {
     return true;
   });
 
+  if (searchParams.get("filter") === "true") {
+    return (
+      <div className="min-h-screen bg-gray-50 flex flex-col max-w-md mx-auto relative pb-20">
+        <div className="bg-white px-4 py-4 shadow-xs border-b border-gray-100 rounded-b-2xl flex-shrink-0 mb-4">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => navigate(-1)}
+              className="p-1 rounded-full hover:bg-gray-100 border-0 bg-transparent cursor-pointer"
+            >
+              <ArrowLeft className="w-6 h-6 text-gray-700" />
+            </button>
+            <h1 className="text-lg font-bold text-gray-900">Filter Outlet</h1>
+          </div>
+        </div>
+
+        <div className="flex-1 overflow-y-auto px-4">
+          <Card className="border-0 shadow-sm rounded-2xl bg-white p-5 space-y-4">
+            <div>
+              <label className="text-xs font-semibold text-gray-500 mb-1.5 block">Customer Type</label>
+              <Select 
+                value={filters.customerType} 
+                onValueChange={(value) => setFilters({ ...filters, customerType: value })}
+              >
+                <SelectTrigger className="h-11 rounded-xl border-gray-200">
+                  <SelectValue placeholder="Select type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Semua Tipe</SelectItem>
+                  <SelectItem value="retail">Retail</SelectItem>
+                  <SelectItem value="wholesaler">Wholesaler</SelectItem>
+                  <SelectItem value="distributor">Distributor</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <label className="text-xs font-semibold text-gray-500 mb-1.5 block">Kredit Limit</label>
+              <Select 
+                value={filters.creditLimit} 
+                onValueChange={(value) => setFilters({ ...filters, creditLimit: value })}
+              >
+                <SelectTrigger className="h-11 rounded-xl border-gray-200">
+                  <SelectValue placeholder="Select range" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Semua Limit</SelectItem>
+                  <SelectItem value="low">Under 10M</SelectItem>
+                  <SelectItem value="medium">10M - 20M</SelectItem>
+                  <SelectItem value="high">Above 20M</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <label className="text-xs font-semibold text-gray-500 mb-1.5 block">Total Piutang</label>
+              <Select 
+                value={filters.outstanding} 
+                onValueChange={(value) => setFilters({ ...filters, outstanding: value })}
+              >
+                <SelectTrigger className="h-11 rounded-xl border-gray-200">
+                  <SelectValue placeholder="Select range" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Semua Piutang</SelectItem>
+                  <SelectItem value="low">Di bawah 5M</SelectItem>
+                  <SelectItem value="medium">5M - 10M</SelectItem>
+                  <SelectItem value="high">Di atas 10M</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="flex gap-3 pt-4 border-t border-gray-100">
+              <Button
+                variant="outline"
+                className="flex-1 h-10 rounded-xl border-gray-200 cursor-pointer"
+                onClick={() => setFilters({
+                  area: "all",
+                  route: "all",
+                  customerType: "all",
+                  paymentStatus: "all",
+                  creditLimit: "all",
+                  outstanding: "all",
+                })}
+              >
+                Reset Filter
+              </Button>
+              <Button 
+                onClick={() => navigate(-1)}
+                className="flex-1 bg-[#45C55D] hover:bg-[#38A34A] text-white border-0 h-10 rounded-xl cursor-pointer font-bold shadow-xs"
+              >
+                Terapkan Filter
+              </Button>
+            </div>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 pb-8">
       {/* Header */}
@@ -180,96 +272,15 @@ export function Customer() {
             />
           </div>
 
-          {/* Filter Sheet */}
-          <Sheet>
-            <SheetTrigger asChild>
-              <Button variant="outline" size="icon" className="h-10 w-10 rounded-xl border-gray-200 hover:bg-gray-50 cursor-pointer">
-                <Filter className="w-4 h-4 text-gray-600" />
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="bottom" className="rounded-t-[2.5rem] max-h-[85vh] overflow-y-auto bg-white border-0 shadow-2xl p-6">
-              <SheetHeader className="pb-4 border-b border-gray-100 flex flex-row items-center justify-between">
-                <SheetTitle className="text-lg font-bold text-gray-900">Filter Outlet</SheetTitle>
-              </SheetHeader>
-              <div className="py-4 space-y-4">
-                <div>
-                  <label className="text-xs font-semibold text-gray-500 mb-1.5 block">Customer Type</label>
-                  <Select 
-                    value={filters.customerType} 
-                    onValueChange={(value) => setFilters({ ...filters, customerType: value })}
-                  >
-                    <SelectTrigger className="h-11 rounded-xl border-gray-200">
-                      <SelectValue placeholder="Select type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Semua Tipe</SelectItem>
-                      <SelectItem value="retail">Retail</SelectItem>
-                      <SelectItem value="wholesaler">Wholesaler</SelectItem>
-                      <SelectItem value="distributor">Distributor</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <label className="text-xs font-semibold text-gray-500 mb-1.5 block">Kredit Limit</label>
-                  <Select 
-                    value={filters.creditLimit} 
-                    onValueChange={(value) => setFilters({ ...filters, creditLimit: value })}
-                  >
-                    <SelectTrigger className="h-11 rounded-xl border-gray-200">
-                      <SelectValue placeholder="Select range" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Semua Limit</SelectItem>
-                      <SelectItem value="low">Under 10M</SelectItem>
-                      <SelectItem value="medium">10M - 20M</SelectItem>
-                      <SelectItem value="high">Above 20M</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <label className="text-xs font-semibold text-gray-500 mb-1.5 block">Total Piutang</label>
-                  <Select 
-                    value={filters.outstanding} 
-                    onValueChange={(value) => setFilters({ ...filters, outstanding: value })}
-                  >
-                    <SelectTrigger className="h-11 rounded-xl border-gray-200">
-                      <SelectValue placeholder="Select range" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Semua Piutang</SelectItem>
-                      <SelectItem value="low">Di bawah 5M</SelectItem>
-                      <SelectItem value="medium">5M - 10M</SelectItem>
-                      <SelectItem value="high">Di atas 10M</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="flex gap-3 pt-4">
-                  <Button
-                    variant="outline"
-                    className="flex-1 h-10 rounded-xl border-gray-200 cursor-pointer"
-                    onClick={() => setFilters({
-                      area: "all",
-                      route: "all",
-                      customerType: "all",
-                      paymentStatus: "all",
-                      creditLimit: "all",
-                      outstanding: "all",
-                    })}
-                  >
-                    Reset Filter
-                  </Button>
-                  <Button 
-                    className="flex-1 bg-[#45C55D] hover:bg-[#38A34A] text-white border-0 h-10 rounded-xl cursor-pointer"
-                  >
-                    Terapkan Filter
-                  </Button>
-                </div>
-              </div>
-            </SheetContent>
-          </Sheet>
+          {/* Filter Button */}
+          <Button 
+            variant="outline" 
+            size="icon" 
+            className="h-10 w-10 rounded-xl border-gray-200 hover:bg-gray-50 cursor-pointer"
+            onClick={() => setSearchParams({ filter: "true" })}
+          >
+            <Filter className="w-4 h-4 text-gray-600" />
+          </Button>
         </div>
       </div>
 

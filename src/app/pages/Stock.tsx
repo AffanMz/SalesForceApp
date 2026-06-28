@@ -1,22 +1,16 @@
 import { useState } from "react";
-import { Search, Filter, ChevronRight } from "lucide-react";
+import { useNavigate, useSearchParams } from "react-router";
+import { Search, Filter, ChevronRight, ArrowLeft } from "lucide-react";
 import { Card, CardContent } from "../components/ui/card";
 import { Input } from "../components/ui/input";
 import { Button } from "../components/ui/button";
 import { Badge } from "../components/ui/badge";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "../components/ui/sheet";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../components/ui/dialog";
 
 export function Stock() {
+  const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedProduct, setSelectedProduct] = useState<any>(null);
   const [filters, setFilters] = useState({
     category: "all",
     warehouse: "all",
@@ -148,6 +142,95 @@ export function Stock() {
     product.code.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  if (searchParams.get("filter") === "true") {
+    return (
+      <div className="min-h-screen bg-gray-50 flex flex-col max-w-md mx-auto relative pb-20">
+        <div className="bg-white px-4 py-4 shadow-xs border-b border-gray-100 rounded-b-2xl flex-shrink-0 mb-4">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => navigate(-1)}
+              className="p-1 rounded-full hover:bg-gray-100 border-0 bg-transparent cursor-pointer"
+            >
+              <ArrowLeft className="w-6 h-6 text-gray-700" />
+            </button>
+            <h1 className="text-lg font-bold text-gray-900">Filter Products</h1>
+          </div>
+        </div>
+
+        <div className="flex-1 overflow-y-auto px-4">
+          <Card className="border-0 shadow-sm rounded-2xl bg-white p-5 space-y-4">
+            <div>
+              <label className="text-sm mb-2 block font-semibold text-gray-600">Category</label>
+              <Select value={filters.category} onValueChange={(value) => setFilters({ ...filters, category: value })}>
+                <SelectTrigger className="h-11 rounded-xl border-gray-200 bg-white">
+                  <SelectValue placeholder="Select category" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Categories</SelectItem>
+                  <SelectItem value="noodles">Noodles</SelectItem>
+                  <SelectItem value="beverages">Beverages</SelectItem>
+                  <SelectItem value="coffee">Coffee</SelectItem>
+                  <SelectItem value="rice">Rice</SelectItem>
+                  <SelectItem value="cooking-oil">Cooking Oil</SelectItem>
+                  <SelectItem value="sugar">Sugar</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <label className="text-sm mb-2 block font-semibold text-gray-600">Warehouse</label>
+              <Select value={filters.warehouse} onValueChange={(value) => setFilters({ ...filters, warehouse: value })}>
+                <SelectTrigger className="h-11 rounded-xl border-gray-200 bg-white">
+                  <SelectValue placeholder="Select warehouse" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Warehouses</SelectItem>
+                  <SelectItem value="warehouse-a">Warehouse A</SelectItem>
+                  <SelectItem value="warehouse-b">Warehouse B</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <label className="text-sm mb-2 block font-semibold text-gray-600">Stock Status</label>
+              <Select value={filters.stockStatus} onValueChange={(value) => setFilters({ ...filters, stockStatus: value })}>
+                <SelectTrigger className="h-11 rounded-xl border-gray-200 bg-white">
+                  <SelectValue placeholder="Select status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Status</SelectItem>
+                  <SelectItem value="available">Available</SelectItem>
+                  <SelectItem value="low">Low Stock</SelectItem>
+                  <SelectItem value="empty">Empty</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="flex gap-3 pt-4 border-t border-gray-100">
+              <Button
+                variant="outline"
+                className="flex-1 h-10 rounded-xl border-gray-200 cursor-pointer"
+                onClick={() => setFilters({
+                  category: "all",
+                  warehouse: "all",
+                  stockStatus: "all",
+                })}
+              >
+                Reset
+              </Button>
+              <Button 
+                onClick={() => navigate(-1)}
+                className="flex-1 bg-[#45C55D] hover:bg-[#38A34A] text-white border-0 h-10 rounded-xl cursor-pointer font-bold shadow-xs"
+              >
+                Apply Filters
+              </Button>
+            </div>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -166,84 +249,15 @@ export function Stock() {
             />
           </div>
 
-          {/* Filter Sheet */}
-          <Sheet>
-            <SheetTrigger asChild>
-              <Button variant="outline" size="icon" className="h-10 w-10 rounded-xl border-gray-200 hover:bg-gray-50 cursor-pointer">
-                <Filter className="w-4 h-4 text-gray-600" />
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="bottom" className="rounded-t-3xl max-h-[85vh] overflow-y-auto">
-              <SheetHeader>
-                <SheetTitle>Filter Products</SheetTitle>
-              </SheetHeader>
-              <div className="py-6 space-y-4">
-                <div>
-                  <label className="text-sm mb-2 block">Category</label>
-                  <Select value={filters.category} onValueChange={(value) => setFilters({ ...filters, category: value })}>
-                    <SelectTrigger className="h-11 rounded-xl border-gray-200 bg-white">
-                      <SelectValue placeholder="Select category" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Categories</SelectItem>
-                      <SelectItem value="noodles">Noodles</SelectItem>
-                      <SelectItem value="beverages">Beverages</SelectItem>
-                      <SelectItem value="coffee">Coffee</SelectItem>
-                      <SelectItem value="rice">Rice</SelectItem>
-                      <SelectItem value="cooking-oil">Cooking Oil</SelectItem>
-                      <SelectItem value="sugar">Sugar</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <label className="text-sm mb-2 block">Warehouse</label>
-                  <Select value={filters.warehouse} onValueChange={(value) => setFilters({ ...filters, warehouse: value })}>
-                    <SelectTrigger className="h-11 rounded-xl border-gray-200 bg-white">
-                      <SelectValue placeholder="Select warehouse" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Warehouses</SelectItem>
-                      <SelectItem value="warehouse-a">Warehouse A</SelectItem>
-                      <SelectItem value="warehouse-b">Warehouse B</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <label className="text-sm mb-2 block">Stock Status</label>
-                  <Select value={filters.stockStatus} onValueChange={(value) => setFilters({ ...filters, stockStatus: value })}>
-                    <SelectTrigger className="h-11 rounded-xl border-gray-200 bg-white">
-                      <SelectValue placeholder="Select status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Status</SelectItem>
-                      <SelectItem value="available">Available</SelectItem>
-                      <SelectItem value="low">Low Stock</SelectItem>
-                      <SelectItem value="empty">Empty</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="flex gap-3 pt-4">
-                  <Button
-                    variant="outline"
-                    className="flex-1 h-10 rounded-xl border-gray-200 cursor-pointer"
-                    onClick={() => setFilters({
-                      category: "all",
-                      warehouse: "all",
-                      stockStatus: "all",
-                    })}
-                  >
-                    Reset
-                  </Button>
-                  <Button className="flex-1 bg-[#45C55D] hover:bg-[#38A34A] text-white border-0 h-10 rounded-xl cursor-pointer">
-                    Apply Filters
-                  </Button>
-                </div>
-              </div>
-            </SheetContent>
-          </Sheet>
+          {/* Filter Button */}
+          <Button 
+            variant="outline" 
+            size="icon" 
+            className="h-10 w-10 rounded-xl border-gray-200 hover:bg-gray-50 cursor-pointer"
+            onClick={() => setSearchParams({ filter: "true" })}
+          >
+            <Filter className="w-4 h-4 text-gray-600" />
+          </Button>
         </div>
       </div>
 
@@ -276,8 +290,8 @@ export function Stock() {
         {filteredProducts.map((product) => (
           <Card
             key={product.id}
-            className="border-0 shadow-sm rounded-2xl cursor-pointer hover:shadow-md transition-shadow"
-            onClick={() => setSelectedProduct(product)}
+            className="border-0 shadow-sm rounded-2xl cursor-pointer hover:shadow-md transition-shadow bg-white"
+            onClick={() => navigate(`/stock/${product.id}`)}
           >
             <CardContent className="p-4">
               <div className="flex items-start gap-3 mb-3">
@@ -317,67 +331,6 @@ export function Stock() {
           </Card>
         ))}
       </div>
-
-      {/* Product Detail Dialog */}
-      <Dialog open={!!selectedProduct} onOpenChange={() => setSelectedProduct(null)}>
-        <DialogContent className="max-w-md rounded-3xl">
-          <DialogHeader>
-            <DialogTitle>Product Detail</DialogTitle>
-          </DialogHeader>
-          {selectedProduct && (
-            <div className="space-y-4">
-              <div className="flex items-center gap-4">
-                <div className="w-20 h-20 bg-gray-100 rounded-2xl flex items-center justify-center flex-shrink-0">
-                  <div className="w-14 h-14 bg-gray-300 rounded-xl"></div>
-                </div>
-                <div className="flex-1">
-                  <h3 className="mb-1">{selectedProduct.name}</h3>
-                  <p className="text-sm text-gray-500">{selectedProduct.code}</p>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div className="bg-gray-50 rounded-xl p-3">
-                  <p className="text-xs text-gray-500 mb-1">Category</p>
-                  <p className="text-sm">{selectedProduct.category}</p>
-                </div>
-                <div className="bg-gray-50 rounded-xl p-3">
-                  <p className="text-xs text-gray-500 mb-1">Price</p>
-                  <p className="text-sm">{formatCurrency(selectedProduct.price)}</p>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div className="bg-gray-50 rounded-xl p-3">
-                  <p className="text-xs text-gray-500 mb-1">Current Stock</p>
-                  <p className="text-lg">{selectedProduct.stock}</p>
-                </div>
-                <div className="bg-gray-50 rounded-xl p-3">
-                  <p className="text-xs text-gray-500 mb-1">Min Stock</p>
-                  <p className="text-lg">{selectedProduct.minStock}</p>
-                </div>
-              </div>
-
-              <div className="bg-gray-50 rounded-xl p-3">
-                <p className="text-xs text-gray-500 mb-1">Warehouse</p>
-                <p className="text-sm">{selectedProduct.warehouse}</p>
-              </div>
-
-              <div className="bg-gray-50 rounded-xl p-3">
-                <p className="text-xs text-gray-500 mb-2">Status</p>
-                {getStockBadge(selectedProduct.status)}
-              </div>
-
-              <Button
-                className="w-full bg-[#45C55D] hover:bg-[#38A34A] h-12 rounded-xl"
-                onClick={() => setSelectedProduct(null)}
-              >
-                Close
-              </Button>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

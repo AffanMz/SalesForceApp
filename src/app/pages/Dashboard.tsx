@@ -15,13 +15,14 @@ import {
   Sparkles,
   Info,
   Calendar,
-  X
+  X,
+  ArrowLeft
 } from "lucide-react";
 import { Card, CardContent } from "../components/ui/card";
 import { Button } from "../components/ui/button";
 import { Badge } from "../components/ui/badge";
 import { Avatar, AvatarFallback } from "../components/ui/avatar";
-import { useNavigate } from "react-router";
+import { useNavigate, useSearchParams } from "react-router";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../components/ui/dialog";
 import { Progress } from "../components/ui/progress";
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
@@ -39,6 +40,7 @@ type CallPlan = {
 
 export function Dashboard() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   // Load call plans and active index from localStorage to make it stateful and persistent
   const [callPlans, setCallPlans] = useState<CallPlan[]>(() => {
@@ -99,11 +101,6 @@ export function Dashboard() {
     const resetPlans = callPlans.map(plan => ({ ...plan, status: "scheduled" as const }));
     setCallPlans(resetPlans);
     setActivePlanIndex(0);
-    confetti({
-      particleCount: 50,
-      spread: 60,
-      origin: { y: 0.8 }
-    });
   };
 
   // Outstanding customers list
@@ -167,7 +164,7 @@ export function Dashboard() {
   const startGpsVerification = () => {
     setGpsVerified(false);
     setCheckInStep(1);
-    setIsCheckInOpen(true);
+    setSearchParams({ "check-in": "true" });
     setTimeout(() => {
       setGpsVerified(true);
       setTimeout(() => {
@@ -199,22 +196,8 @@ export function Dashboard() {
     };
     setCallPlans(updatedPlans);
 
-    // 2. Play confetti
-    confetti({
-      particleCount: 150,
-      spread: 80,
-      origin: { y: 0.6 }
-    });
-
-    // 3. Move to next customer or complete
-    setTimeout(() => {
-      setActivePlanIndex((prev) => prev + 1);
-      setIsCheckInOpen(false);
-      // Reset steps
-      setPhotoTaken(false);
-      setGpsVerified(false);
-      setCheckInStep(1);
-    }, 1000);
+    // 2. Transition to Step 3 (Success Screen)
+    setCheckInStep(3);
   };
 
   // Recharts Chart Data (Mock performance metrics)
@@ -224,6 +207,316 @@ export function Dashboard() {
     { name: "W3", sales: 28000000 },
     { name: "W4", sales: 41500000 },
   ];
+
+  if (searchParams.get("check-in") === "true") {
+    return (
+      <div className="min-h-screen bg-gray-50 flex flex-col max-w-md mx-auto relative pb-20">
+        <div className="bg-white px-4 py-4 shadow-xs border-b border-gray-100 rounded-b-2xl flex-shrink-0 mb-4">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => {
+                setSearchParams({});
+                setPhotoTaken(false);
+                setGpsVerified(false);
+                setCheckInStep(1);
+              }}
+              className="p-1 rounded-full hover:bg-gray-100 border-0 bg-transparent cursor-pointer"
+            >
+              <ArrowLeft className="w-6 h-6 text-gray-700" />
+            </button>
+            <h1 className="text-lg font-bold text-gray-900">Check-In Presensi Sales</h1>
+          </div>
+        </div>
+
+        <div className="flex-1 overflow-y-auto px-4">
+          <Card className="border-0 shadow-sm rounded-2xl bg-white p-5 relative overflow-hidden">
+            <div id="camera-flash" className="absolute inset-0 bg-white opacity-0 transition-opacity duration-150 pointer-events-none z-30" />
+
+            {checkInStep === 1 && (
+              <div className="text-center py-6 flex flex-col items-center">
+                <div className="w-14 h-14 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center animate-bounce mb-4">
+                  <MapPin className="w-7 h-7" />
+                </div>
+                <h4 className="text-sm font-bold text-gray-900 mb-1">Memverifikasi GPS Anda...</h4>
+                <p className="text-xs text-gray-500 max-w-xs mb-4">
+                  Harap tunggu, kami mendeteksi koordinat Anda dengan outlet <span className="font-semibold">{currentPlan?.name}</span>.
+                </p>
+                <div className="w-full bg-gray-100 rounded-full h-1.5 max-w-[200px] overflow-hidden">
+                  <div className="h-full bg-blue-500 rounded-full animate-[progress_1.5s_ease-in-out_infinite]" style={{ width: "60%" }} />
+                </div>
+                {gpsVerified && (
+                  <div className="mt-4 flex items-center gap-1.5 text-xs font-semibold text-green-600 bg-green-50 px-3 py-1.5 rounded-full">
+                    GPS Terverifikasi (Radius 12 meter)
+                  </div>
+                )}
+                <Button
+                  variant="ghost"
+                  onClick={() => {
+                    setSearchParams({ "check-in": "true", status: "failed" });
+                    setCheckInStep(3);
+                  }}
+                  className="mt-6 text-xs text-red-500 hover:text-red-700 bg-transparent border-0 cursor-pointer"
+                >
+                  Simulasikan Gagal GPS
+                </Button>
+              </div>
+            )}
+
+            {checkInStep === 2 && (
+               <div className="space-y-4">
+                 <div className="text-center">
+                   <h4 className="text-sm font-bold text-gray-900 mb-1">Ambil Foto Selfie Depan Toko</h4>
+                   <p className="text-xs text-gray-500 mb-3">Ambil foto selfie/depan toko {currentPlan?.name} sebagai bukti kunjungan fisik.</p>
+                 </div>
+
+                 <div className="relative aspect-video rounded-xl bg-gray-900 overflow-hidden flex items-center justify-center border border-gray-200">
+                   {photoTaken ? (
+                     <div className="w-full h-full relative">
+                       <svg viewBox="0 0 400 225" className="w-full h-full object-cover">
+                         <rect width="400" height="225" fill="#e0f2fe" />
+                         <rect x="80" y="80" width="240" height="145" fill="#f1f5f9" stroke="#94a3b8" strokeWidth="2" />
+                         <path d="M70 80 L330 80 L310 50 L90 50 Z" fill="#ef4444" />
+                         <text x="200" y="120" fill="#334155" fontSize="14" fontWeight="bold" textAnchor="middle">{currentPlan?.name}</text>
+                         <rect x="10" y="195" width="200" height="22" rx="4" fill="black" opacity="0.6" />
+                         <text x="15" y="210" fill="#22c55e" fontSize="9" fontWeight="mono">GPS OK: -7.2575, 112.7521</text>
+                       </svg>
+                     </div>
+                   ) : (
+                     <div className="text-center text-gray-400 space-y-2 p-4">
+                       <Camera className="w-12 h-12 mx-auto animate-pulse text-gray-500" />
+                       <p className="text-xs font-semibold">CAMERA ACTIVE</p>
+                       <div className="border border-white/20 rounded p-1.5 text-[10px] bg-black/30 font-mono text-green-400">
+                         GPS HUD: 7°15'27.0"S 112°45'07.6"E
+                       </div>
+                     </div>
+                   )}
+                 </div>
+
+                 <div className="flex gap-3">
+                   {!photoTaken ? (
+                     <Button
+                       onClick={handleTakePhoto}
+                       className="w-full bg-gray-900 hover:bg-gray-800 text-white font-semibold rounded-xl h-10 border-0 cursor-pointer flex items-center justify-center gap-1.5"
+                     >
+                       <Camera className="w-4 h-4" />
+                       Ambil Foto
+                     </Button>
+                   ) : (
+                     <>
+                       <Button
+                         variant="outline"
+                         onClick={() => setPhotoTaken(false)}
+                         className="flex-1 border border-gray-200 text-gray-700 font-semibold rounded-xl h-10 cursor-pointer"
+                       >
+                         Ulangi Foto
+                       </Button>
+                       <Button
+                         onClick={submitPresence}
+                         className="flex-1 bg-[#45C55D] hover:bg-[#38A34A] text-white font-semibold rounded-xl h-10 border-0 cursor-pointer flex items-center justify-center gap-1.5"
+                       >
+                         Submit Presensi
+                       </Button>
+                     </>
+                   )}
+                 </div>
+               </div>
+             )}
+
+             {checkInStep === 3 && (
+               <div className="text-center py-8 space-y-4 flex flex-col items-center">
+                 {searchParams.get("status") === "failed" ? (
+                   <>
+                     <div className="px-4 py-2 bg-red-50 text-red-700 font-bold rounded-xl border border-red-200 uppercase tracking-wide text-xs">
+                       STATUS PRESENSI: GAGAL
+                     </div>
+                     <p className="text-xs text-gray-500 max-w-xs leading-relaxed">
+                       Presensi gagal dilakukan. Alasan: Koordinat GPS perangkat Anda berada di luar radius 100 meter dari lokasi outlet.
+                     </p>
+                     <Button
+                       onClick={() => {
+                         setSearchParams({ "check-in": "true" });
+                         setCheckInStep(1);
+                         setPhotoTaken(false);
+                         setGpsVerified(false);
+                       }}
+                       className="w-full bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl h-10 border-0 cursor-pointer"
+                     >
+                       Ulangi Presensi
+                     </Button>
+                   </>
+                 ) : (
+                   <>
+                     <div className="px-4 py-2 bg-green-50 text-green-700 font-bold rounded-xl border border-green-200 uppercase tracking-wide text-xs">
+                       STATUS PRESENSI: BERHASIL
+                     </div>
+                     <p className="text-xs text-gray-500 max-w-xs leading-relaxed">
+                       Presensi kunjungan sales ke outlet <strong>{currentPlan?.name}</strong> telah berhasil direkam ke sistem.
+                     </p>
+                     <Button
+                       onClick={() => {
+                         setSearchParams({});
+                         setPhotoTaken(false);
+                         setGpsVerified(false);
+                         setCheckInStep(1);
+                         // Move to next customer
+                         setActivePlanIndex((prev) => prev + 1);
+                       }}
+                       className="w-full bg-[#45C55D] hover:bg-[#38A34A] text-white font-bold rounded-xl h-10 border-0 cursor-pointer"
+                     >
+                       Lanjut ke Rencana Berikutnya
+                     </Button>
+                   </>
+                 )}
+               </div>
+             )}
+           </Card>
+         </div>
+       </div>
+     );
+   }
+
+  if (searchParams.get("analytics") === "true") {
+    return (
+      <div className="min-h-screen bg-gray-50 flex flex-col max-w-md mx-auto relative pb-20">
+        <div className="bg-white px-4 py-4 shadow-xs border-b border-gray-100 rounded-b-2xl flex-shrink-0 mb-4">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setSearchParams({})}
+              className="p-1 rounded-full hover:bg-gray-100 border-0 bg-transparent cursor-pointer"
+            >
+              <ArrowLeft className="w-6 h-6 text-gray-700" />
+            </button>
+            <h1 className="text-lg font-bold text-gray-900">Detail Kinerja Sales Andi</h1>
+          </div>
+        </div>
+
+        <div className="flex-1 overflow-y-auto px-4 space-y-4">
+          <Card className="border-0 shadow-sm rounded-2xl bg-white p-5 space-y-4">
+            <div>
+              <p className="text-xs text-gray-500 mb-1 font-semibold">Omzet Realisasi vs Target</p>
+              <div className="flex justify-between items-baseline mb-1">
+                <span className="text-lg font-bold text-gray-900">Rp 125.500.000</span>
+                <span className="text-xs text-gray-500">Target: Rp 150.000.000</span>
+              </div>
+              <Progress value={83.6} className="h-2 bg-gray-100 rounded-full" />
+              <p className="text-[10px] text-green-600 mt-1 font-semibold">&uarr; Kurang Rp 24.500.000 lagi untuk mencapai target</p>
+            </div>
+
+            {/* Performance Chart */}
+            <div className="bg-gray-50 rounded-xl p-3">
+              <p className="text-xs font-semibold text-gray-700 mb-2">Grafik Penjualan Mingguan (Juni 2026)</p>
+              <div className="h-44 w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="colorSales" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#45C55D" stopOpacity={0.4}/>
+                        <stop offset="95%" stopColor="#45C55D" stopOpacity={0.0}/>
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
+                    <XAxis dataKey="name" stroke="#9ca3af" fontSize={10} tickLine={false} axisLine={false} />
+                    <YAxis 
+                      stroke="#9ca3af" 
+                      fontSize={8} 
+                      tickLine={false} 
+                      axisLine={false}
+                      tickFormatter={(value) => `${(value / 1000000).toFixed(0)}M`}
+                    />
+                    <Tooltip 
+                      formatter={(value: any) => [formatCurrency(value), "Penjualan"]}
+                      contentStyle={{ background: "#1f2937", border: "none", borderRadius: "8px", color: "#fff", fontSize: "11px" }}
+                    />
+                    <Area type="monotone" dataKey="sales" stroke="#45C55D" strokeWidth={2} fillOpacity={1} fill="url(#colorSales)" />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+            {/* Statistics */}
+            <div className="grid grid-cols-2 gap-3 text-xs">
+              <div className="bg-gray-50 rounded-xl p-3 border border-gray-100">
+                <p className="text-gray-500 mb-1 font-semibold">Rata-rata Order</p>
+                <p className="text-sm font-bold text-gray-800">Rp 506.048</p>
+              </div>
+              <div className="bg-gray-50 rounded-xl p-3 border border-gray-100">
+                <p className="text-gray-500 mb-1 font-semibold">Efektivitas Kunjungan</p>
+                <p className="text-sm font-bold text-green-600">92% (High)</p>
+              </div>
+            </div>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
+  if (searchParams.get("select-target") === "true") {
+    return (
+      <div className="min-h-screen bg-gray-50 flex flex-col max-w-md mx-auto relative pb-20">
+        <div className="bg-white px-4 py-4 shadow-xs border-b border-gray-100 rounded-b-2xl flex-shrink-0 mb-4">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setSearchParams({})}
+              className="p-1 rounded-full hover:bg-gray-100 border-0 bg-transparent cursor-pointer"
+            >
+              <ArrowLeft className="w-6 h-6 text-gray-700" />
+            </button>
+            <h1 className="text-lg font-bold text-gray-900">Pilih Target Kunjungan Baru</h1>
+          </div>
+        </div>
+
+        <div className="flex-1 overflow-y-auto px-4 space-y-3">
+          <p className="text-xs text-gray-500 font-medium">Pilih salah satu rencana kunjungan untuk dijadikan target aktif saat ini:</p>
+          <div className="space-y-2.5">
+            {callPlans.map((plan, index) => {
+              const isCurrent = index === activePlanIndex;
+              const isVisited = plan.status === "visited";
+              
+              return (
+                <div
+                  key={plan.id}
+                  onClick={() => {
+                    if (isVisited) return;
+                    setActivePlanIndex(index);
+                    setSearchParams({});
+                    toast.info(`Target aktif diubah ke: ${plan.name}`);
+                  }}
+                  className={`border rounded-xl p-3.5 flex justify-between items-center transition-all ${
+                    isVisited 
+                      ? "bg-gray-50/70 border-gray-100 opacity-60 cursor-not-allowed" 
+                      : isCurrent
+                        ? "bg-emerald-50/20 border-[#45C55D] cursor-pointer ring-1 ring-[#45C55D]/30"
+                        : "bg-white border-gray-100 hover:bg-gray-50 cursor-pointer"
+                  }`}
+                >
+                  <div>
+                    <h4 className="text-xs font-bold text-gray-900">{plan.name}</h4>
+                    <p className="text-[10px] text-gray-400 mt-0.5 leading-tight">{plan.address}</p>
+                  </div>
+
+                  <div className="text-right flex-shrink-0 ml-3">
+                    {isVisited ? (
+                      <Badge className="bg-green-100 text-green-700 hover:bg-green-100 border-0 text-[9px] rounded-lg">
+                        Visited
+                      </Badge>
+                    ) : isCurrent ? (
+                      <Badge className="bg-[#45C55D] text-white border-0 text-[9px] rounded-lg">
+                        Active
+                      </Badge>
+                    ) : (
+                      <Badge variant="secondary" className="border-0 text-[9px] rounded-lg">
+                        Scheduled
+                      </Badge>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 pb-8">
@@ -273,7 +566,7 @@ export function Dashboard() {
               </div>
             </div>
             <Button
-              onClick={() => setIsDetailOpen(true)}
+              onClick={() => setSearchParams({ analytics: "true" })}
               className="w-full bg-white text-[#2b9348] hover:bg-gray-50 active:scale-[0.98] transition-all font-semibold rounded-xl h-10 shadow-xs border-0 cursor-pointer"
             >
               Lihat Detail Analisis
@@ -351,7 +644,7 @@ export function Dashboard() {
               {/* Dynamic Target Switching Controls */}
               <div className="flex justify-between mt-3.5 pt-3.5 border-t border-gray-100 text-xs font-semibold text-gray-500">
                 <button 
-                  onClick={() => setIsTargetPickerOpen(true)}
+                  onClick={() => setSearchParams({ "select-target": "true" })}
                   className="hover:text-[#45C55D] cursor-pointer bg-transparent border-0 flex items-center gap-1 text-gray-500 transition-colors"
                 >
                   <Map className="w-3.5 h-3.5 text-gray-400" /> Pilih Toko Lain
@@ -372,8 +665,8 @@ export function Dashboard() {
               <Sparkles className="w-6 h-6 text-yellow-400 animate-pulse" />
             </div>
             <CardContent className="p-0 flex flex-col items-center">
-              <div className="w-16 h-16 bg-[#45C55D]/20 rounded-full flex items-center justify-center mb-4 text-[#45C55D]">
-                <CheckCircle2 className="w-10 h-10" />
+              <div className="px-4 py-2 bg-green-500/20 text-[#45C55D] font-bold rounded-xl border border-green-500/30 mb-4 uppercase tracking-wide text-xs">
+                STATUS KUNJUNGAN: BERHASIL
               </div>
               <h4 className="text-lg font-bold mb-1">Semua Rencana Kunjungan Selesai!</h4>
               <p className="text-xs text-gray-300 max-w-xs mb-4">
@@ -409,7 +702,14 @@ export function Dashboard() {
               <Card
                 key={index}
                 className="border-0 shadow-xs rounded-2xl cursor-pointer hover:shadow-md transition-all active:scale-[0.98]"
-                onClick={() => navigate(action.path)}
+                onClick={() => {
+                  let path = action.path;
+                  if (currentPlan && (action.label === "Sales Order" || action.label === "Retur" || action.label === "Pelunasan")) {
+                    const separator = path.includes("?") ? "&" : "?";
+                    path = `${path}${separator}customerId=${currentPlan.id}`;
+                  }
+                  navigate(path);
+                }}
               >
                 <CardContent className="p-3.5 flex items-center gap-3">
                   <div className={`w-11 h-11 ${action.color} rounded-xl flex items-center justify-center flex-shrink-0 shadow-xs`}>
@@ -457,256 +757,6 @@ export function Dashboard() {
         </div>
       </div>
 
-      {/* PRESENCE CHECK-IN MODAL */}
-      <Dialog open={isCheckInOpen} onOpenChange={setIsCheckInOpen}>
-        <DialogContent className="max-w-md rounded-2xl p-0 overflow-hidden border-0 shadow-xl bg-white">
-          <DialogHeader className="p-4 border-b border-gray-100">
-            <DialogTitle className="text-base font-bold text-gray-900 flex items-center gap-2">
-              <Camera className="w-5 h-5 text-[#45C55D]" />
-              Check-In Presensi Sales
-            </DialogTitle>
-          </DialogHeader>
-
-          <div className="p-5 relative">
-            {/* Camera Flash Screen */}
-            <div id="camera-flash" className="absolute inset-0 bg-white opacity-0 transition-opacity duration-150 pointer-events-none z-30" />
-
-            {checkInStep === 1 && (
-              <div className="text-center py-6 flex flex-col items-center">
-                <div className="w-14 h-14 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center animate-bounce mb-4">
-                  <MapPin className="w-7 h-7" />
-                </div>
-                <h4 className="text-sm font-bold text-gray-900 mb-1">Memverifikasi GPS Anda...</h4>
-                <p className="text-xs text-gray-500 max-w-xs mb-4">
-                  Harap tunggu, kami mendeteksi koordinat Anda dengan outlet <span className="font-semibold">{currentPlan?.name}</span>.
-                </p>
-                <div className="w-full bg-gray-100 rounded-full h-1.5 max-w-[200px] overflow-hidden">
-                  <div className="h-full bg-blue-500 rounded-full animate-[progress_1.5s_ease-in-out_infinite]" style={{ width: "60%" }} />
-                </div>
-                {gpsVerified && (
-                  <div className="mt-4 flex items-center gap-1.5 text-xs font-semibold text-green-600 bg-green-50 px-3 py-1.5 rounded-full">
-                    <CheckCircle2 className="w-4 h-4" />
-                    GPS Terverifikasi (Radius 12 meter)
-                  </div>
-                )}
-              </div>
-            )}
-
-            {checkInStep === 2 && (
-              <div className="space-y-4">
-                <div className="text-center">
-                  <h4 className="text-sm font-bold text-gray-900 mb-1">Ambil Foto Selfie Depan Toko</h4>
-                  <p className="text-xs text-gray-500 mb-3">Ambil foto selfie/depan toko {currentPlan?.name} sebagai bukti kunjungan fisik.</p>
-                </div>
-
-                {/* Mock Camera Viewport */}
-                <div className="relative aspect-video rounded-xl bg-gray-900 overflow-hidden flex items-center justify-center border-2 border-dashed border-gray-300">
-                  {photoTaken ? (
-                    /* Mock Photo Preview */
-                    <div className="w-full h-full relative">
-                      <svg viewBox="0 0 400 225" className="w-full h-full object-cover">
-                        {/* Gradient sky */}
-                        <rect width="400" height="225" fill="#e0f2fe" />
-                        {/* Shop building */}
-                        <rect x="80" y="80" width="240" height="145" fill="#f1f5f9" stroke="#94a3b8" strokeWidth="2" />
-                        {/* Shop awning/roof */}
-                        <path d="M70 80 L330 80 L310 50 L90 50 Z" fill="#ef4444" />
-                        <text x="200" y="120" fill="#334155" fontSize="14" fontWeight="bold" textAnchor="middle">{currentPlan?.name}</text>
-                        {/* Camera timestamp watermark */}
-                        <rect x="10" y="195" width="200" height="22" rx="4" fill="black" opacity="0.6" />
-                        <text x="15" y="210" fill="#22c55e" fontSize="9" fontWeight="mono">GPS OK: -7.2575, 112.7521</text>
-                      </svg>
-                      <div className="absolute top-2 right-2 bg-green-500 text-white rounded-full p-1 shadow-xs">
-                        <CheckCircle2 className="w-4 h-4" />
-                      </div>
-                    </div>
-                  ) : (
-                    /* Active Lens HUD overlay */
-                    <div className="text-center text-gray-400 space-y-2 p-4">
-                      <Camera className="w-12 h-12 mx-auto animate-pulse text-gray-500" />
-                      <p className="text-xs font-semibold">CAMERA ACTIVE</p>
-                      <div className="border border-white/20 rounded p-1.5 text-[10px] bg-black/30 font-mono text-green-400">
-                        GPS HUD: 7°15'27.0"S 112°45'07.6"E
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                <div className="flex gap-3">
-                  {!photoTaken ? (
-                    <Button
-                      onClick={handleTakePhoto}
-                      className="w-full bg-gray-900 hover:bg-gray-800 text-white font-semibold rounded-xl h-10 border-0 cursor-pointer flex items-center justify-center gap-1.5"
-                    >
-                      <Camera className="w-4 h-4" />
-                      Ambil Foto
-                    </Button>
-                  ) : (
-                    <>
-                      <Button
-                        variant="outline"
-                        onClick={() => setPhotoTaken(false)}
-                        className="flex-1 border border-gray-200 text-gray-700 font-semibold rounded-xl h-10 cursor-pointer"
-                      >
-                        Ulangi Foto
-                      </Button>
-                      <Button
-                        onClick={submitPresence}
-                        className="flex-1 bg-[#45C55D] hover:bg-[#38A34A] text-white font-semibold rounded-xl h-10 border-0 cursor-pointer flex items-center justify-center gap-1.5"
-                      >
-                        <CheckCircle2 className="w-4 h-4" />
-                        Submit Presensi
-                      </Button>
-                    </>
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* DETAIL ANALYSIS / OMZET MODAL */}
-      <Dialog open={isDetailOpen} onOpenChange={setIsDetailOpen}>
-        <DialogContent className="max-w-md rounded-2xl p-0 overflow-hidden border-0 shadow-xl bg-white">
-          <DialogHeader className="p-4 border-b border-gray-100">
-            <DialogTitle className="text-base font-bold text-gray-900 flex items-center gap-2">
-              <TrendingUp className="w-5 h-5 text-[#45C55D]" />
-              Detail Kinerja Sales Andi
-            </DialogTitle>
-          </DialogHeader>
-
-          <div className="p-5 space-y-4">
-            <div>
-              <p className="text-xs text-gray-500 mb-1">Omzet Realisasi vs Target</p>
-              <div className="flex justify-between items-baseline mb-1">
-                <span className="text-lg font-bold text-gray-900">Rp 125.500.000</span>
-                <span className="text-xs text-gray-500">Target: Rp 150.000.000</span>
-              </div>
-              <Progress value={83.6} className="h-2 bg-gray-100 rounded-full" />
-              <p className="text-[10px] text-green-600 mt-1 font-semibold">&uarr; Kurang Rp 24.500.000 lagi untuk mencapai target</p>
-            </div>
-
-            {/* Performance Chart */}
-            <div className="bg-gray-50 rounded-xl p-3">
-              <p className="text-xs font-semibold text-gray-700 mb-2">Grafik Penjualan Mingguan (Juni 2026)</p>
-              <div className="h-44 w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                    <defs>
-                      <linearGradient id="colorSales" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#45C55D" stopOpacity={0.4}/>
-                        <stop offset="95%" stopColor="#45C55D" stopOpacity={0.0}/>
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
-                    <XAxis dataKey="name" stroke="#9ca3af" fontSize={10} tickLine={false} axisLine={false} />
-                    <YAxis 
-                      stroke="#9ca3af" 
-                      fontSize={8} 
-                      tickLine={false} 
-                      axisLine={false}
-                      tickFormatter={(value) => `${(value / 1000000).toFixed(0)}M`}
-                    />
-                    <Tooltip 
-                      formatter={(value: any) => [formatCurrency(value), "Penjualan"]}
-                      contentStyle={{ background: "#1f2937", border: "none", borderRadius: "8px", color: "#fff", fontSize: "11px" }}
-                    />
-                    <Area type="monotone" dataKey="sales" stroke="#45C55D" strokeWidth={2} fillOpacity={1} fill="url(#colorSales)" />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-
-            {/* Statistics */}
-            <div className="grid grid-cols-2 gap-3 text-xs">
-              <div className="bg-gray-50 rounded-xl p-3 border border-gray-100">
-                <p className="text-gray-500 mb-1">Rata-rata Order</p>
-                <p className="text-sm font-bold text-gray-800">Rp 506.048</p>
-              </div>
-              <div className="bg-gray-50 rounded-xl p-3 border border-gray-100">
-                <p className="text-gray-500 mb-1">Efektivitas Kunjungan</p>
-                <p className="text-sm font-bold text-green-600">92% (High)</p>
-              </div>
-            </div>
-
-            <Button
-              onClick={() => setIsDetailOpen(false)}
-              className="w-full bg-[#45C55D] hover:bg-[#38A34A] text-white font-semibold rounded-xl h-10 border-0 cursor-pointer shadow-xs"
-            >
-              Tutup Rincian
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
-      {/* TARGET PICKER DIALOG */}
-      <Dialog open={isTargetPickerOpen} onOpenChange={setIsTargetPickerOpen}>
-        <DialogContent className="max-w-md rounded-2xl p-0 overflow-hidden border-0 shadow-xl bg-white">
-          <DialogHeader className="p-4 border-b border-gray-100">
-            <DialogTitle className="text-base font-bold text-gray-900 flex items-center gap-1.5">
-              <Map className="w-5 h-5 text-gray-500" />
-              Pilih Target Kunjungan Baru
-            </DialogTitle>
-          </DialogHeader>
-
-          <div className="p-4 space-y-3">
-            <p className="text-xs text-gray-500 font-medium">Pilih salah satu rencana kunjungan untuk dijadikan target aktif saat ini:</p>
-            <div className="space-y-2.5">
-              {callPlans.map((plan, index) => {
-                const isCurrent = index === activePlanIndex;
-                const isVisited = plan.status === "visited";
-                
-                return (
-                  <div
-                    key={plan.id}
-                    onClick={() => {
-                      if (isVisited) return;
-                      setActivePlanIndex(index);
-                      setIsTargetPickerOpen(false);
-                      toast.info(`Target aktif diubah ke: ${plan.name}`);
-                    }}
-                    className={`border rounded-xl p-3 flex justify-between items-center transition-all ${
-                      isVisited 
-                        ? "bg-gray-50/70 border-gray-100 opacity-60 cursor-not-allowed" 
-                        : isCurrent
-                          ? "bg-emerald-50/20 border-[#45C55D] cursor-pointer ring-1 ring-[#45C55D]/30"
-                          : "bg-white border-gray-100 hover:bg-gray-50 cursor-pointer"
-                    }`}
-                  >
-                    <div>
-                      <h4 className="text-xs font-bold text-gray-900">{plan.name}</h4>
-                      <p className="text-[9px] text-gray-400 mt-0.5 leading-tight">{plan.address}</p>
-                    </div>
-
-                    <div className="text-right flex-shrink-0 ml-3">
-                      {isVisited ? (
-                        <Badge className="bg-green-100 text-green-700 hover:bg-green-100 border-0 text-[9px] rounded-lg">
-                          Visited
-                        </Badge>
-                      ) : isCurrent ? (
-                        <Badge className="bg-[#45C55D] text-white border-0 text-[9px] rounded-lg">
-                          Active
-                        </Badge>
-                      ) : (
-                        <Badge variant="secondary" className="border-0 text-[9px] rounded-lg">
-                          Scheduled
-                        </Badge>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-            
-            <Button
-              onClick={() => setIsTargetPickerOpen(false)}
-              className="w-full mt-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-xl h-10 border-0 cursor-pointer"
-            >
-              Kembali
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
